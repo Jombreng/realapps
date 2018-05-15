@@ -53,15 +53,67 @@
                     android:scrollbars="@null"
                     android:layout_height="match_parent"/>
 
+                <com.google.vr.sdk.widgets.video.VrVideoView
+                    android:visibility="gone"
+                    android:id="@+id/panoVideoView"
+                    android:layout_width="match_parent"
+                    android:scrollbars="@null"
+                    android:layout_height="match_parent"/>
+
             </RelativeLayout>
 
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/linearSeekbar"
+                android:layout_below="@id/authorImageView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" >
+                <!-- Seeking UI & progress indicator.-->
+                <ImageButton
+                    android:background="@color/white_transparent"
+                    android:id="@+id/play_toggle"
+                    android:paddingTop="4dp"
+                    android:paddingStart="0dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/ic_pause_white_24px"/>
+                <SeekBar
+                    android:id="@+id/seek_bar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_height="32dp"
+                    android:layout_weight="8"
+                    android:layout_width="0dp"/>
+                <ImageButton
+                    android:background="@color/white_transparent"
+                    android:id="@+id/volume_toggle"
+                    android:paddingTop="4dp"
+                    android:paddingStart="0dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@drawable/volume_on"/>
+            </LinearLayout>
+            <TextView
+                android:visibility="gone"
+                android:paddingBottom="8dp"
+                android:layout_below="@id/linearSeekbar"
+                android:id="@+id/status_text"
+                android:text="Loading Video..."
+                android:layout_centerInParent="true"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:textSize="@dimen/caption_time_size"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"/>
             <FrameLayout
                 android:visibility="gone"
                 android:id="@+id/label_layout"
                 android:layout_marginLeft="@dimen/large_intrinsic_padding"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/imageContainer"
+                android:layout_below="@id/status_text"
                 android:background="@drawable/label_rounded_bg"
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
@@ -75,12 +127,34 @@
                     android:layout_height="wrap_content" />
             </FrameLayout>
 
+            <FrameLayout
+                android:visibility="gone"
+                android:id="@+id/label_layout_post_video"
+                android:layout_marginLeft="@dimen/intrinsic_padding"
+                android:layout_marginBottom="@dimen/intrinsic_padding"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/status_text"
+                android:layout_toEndOf="@id/label_layout"
+                android:background="@drawable/label_rounded_video_bg"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp">
+                <TextView
+                    android:textColor="@color/orange_500"
+                    android:textStyle="bold"
+                    android:text="@string/label_video"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+
             <TextView
                 android:id="@+id/titleTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:layout_below="@+id/authorImageView"
+                android:layout_below="@+id/label_layout"
                 android:layout_marginBottom="@dimen/intrinsic_padding"
                 android:layout_toStartOf="@+id/authorImageView"
                 android:paddingLeft="@dimen/large_intrinsic_padding"

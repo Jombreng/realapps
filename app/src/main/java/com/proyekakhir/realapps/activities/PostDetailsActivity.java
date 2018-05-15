@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -56,10 +57,14 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -74,6 +79,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.vr.sdk.widgets.pano.VrPanoramaEventListener;
 import com.google.vr.sdk.widgets.pano.VrPanoramaView;
+import com.google.vr.sdk.widgets.video.VrVideoEventListener;
+import com.google.vr.sdk.widgets.video.VrVideoView;
 import com.proyekakhir.realapps.R;
 import com.proyekakhir.realapps.adapters.CommentsAdapter;
 import com.proyekakhir.realapps.controllers.LikeController;
@@ -96,6 +103,7 @@ import com.proyekakhir.realapps.model.Profile;
 import com.proyekakhir.realapps.utils.FormatterUtil;
 import com.proyekakhir.realapps.utils.Utils;
 
+import java.io.IOException;
 import java.util.List;
 
 public class PostDetailsActivity extends BaseActivity implements EditCommentDialog.CommentDialogCallback {
@@ -128,7 +136,14 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     private RecyclerView commentsRecyclerView;
     private TextView warningCommentsTextView;
     private VrPanoramaView vrPanoramaView;
+    private VrVideoView vrVideoView;
     private FrameLayout label360;
+    private FrameLayout labelVideo;
+
+    private TextView statusText;
+    private SeekBar seekBar;
+    private ImageButton volumeToggle,playToggle;
+    private LinearLayout linearSeekbar;
 
     private RequestOptions cropOptions;
 
@@ -153,8 +168,11 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     private ActionMode mActionMode;
     private boolean isEnterTransitionFinished = false;
     private boolean statePureTouch = false;
+    private boolean isMuted;
+    private boolean isPaused = false;
 
     private ImageLoaderTask imageLoaderTask;
+    private VideoLoaderTask backgroundVideoLoaderTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -174,6 +192,7 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
 
         incrementWatchersCount();
 
+        labelVideo = (FrameLayout) findViewById(R.id.label_layout_post_video);
         label360 = (FrameLayout) findViewById(R.id.label_layout);
         titleTextView = (TextView) findViewById(R.id.titleTextView);
         descriptionEditText = (TextView) findViewById(R.id.descriptionEditText);
@@ -194,6 +213,15 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         commentsProgressBar = (ProgressBar) findViewById(R.id.commentsProgressBar);
         warningCommentsTextView = (TextView) findViewById(R.id.warningCommentsTextView);
         vrPanoramaView = (VrPanoramaView) findViewById(R.id.panoImageView);
+
+        //vrVideo widget
+        statusText =(TextView) findViewById(R.id.status_text);
+        seekBar = (SeekBar) findViewById(R.id.seek_bar);
+        volumeToggle = (ImageButton) findViewById(R.id.volume_toggle);
+        linearSeekbar =(LinearLayout) findViewById(R.id.linearSeekbar);
+        playToggle = (ImageButton) findViewById(R.id.play_toggle);
+        seekBar.setOnSeekBarChangeListener(new PostDetailsActivity.SeekBarListener());
+        vrVideoView = (VrVideoView) findViewById(R.id.panoVideoView);
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && isAuthorAnimationRequired) {
             authorImageView.setScaleX(0);
@@ -336,6 +364,85 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
             }
         });
 
+        vrVideoView.setEventListener(new VrVideoEventListener(){
+            @Override
+            public void onCompletion() {
+
+                vrVideoView.seekTo(0);
+            }
+
+            @Override
+            public void onNewFrame() {
+                updateStatusText();
+                seekBar.setProgress((int) vrVideoView.getCurrentPosition());
+            }
+
+            @Override
+            public void onLoadSuccess() {
+                seekBar.setMax((int) vrVideoView.getDuration());
+                updateStatusText();
+            }
+
+            @Override
+            public void onLoadError(String errorMessage) {
+                super.onLoadError(errorMessage);
+            }
+
+            @Override
+            public void onClick() {
+                int display = vrVideoView.getDisplayMode();
+                switch (display){
+                    case 1:
+                        vrVideoView.setDisplayMode(2);
+                        break;
+                    case 2:
+                        if(!statePureTouch){
+                            vrVideoView.setPureTouchTracking(true);
+                            statePureTouch = true;
+                        }else {
+                            vrVideoView.setPureTouchTracking(false);
+                            statePureTouch = false;
+                        }
+                        break;
+                    default:
+                }
+            }
+
+            @Override
+            public void onDisplayModeChanged(int newDisplayMode) {
+                switch (newDisplayMode){
+                    case 1:
+                        vrVideoView.setPureTouchTracking(true);
+                        vrVideoView.setStereoModeButtonEnabled(false);
+                        break;
+                    case 2:
+                        vrVideoView.setPureTouchTracking(false);
+                        vrVideoView.setStereoModeButtonEnabled(true);
+                        break;
+                    case 3:
+                        vrVideoView.setPureTouchTracking(false);
+                        vrVideoView.setStereoModeButtonEnabled(false);
+                        break;
+                    default:
+                        return;
+                }
+            }
+        });
+
+        playToggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                togglePause();
+            }
+        });
+
+        volumeToggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setIsMuted(!isMuted);
+            }
+        });
+
         authorImageView.setOnClickListener(onAuthorClickListener);
 
         authorTextView.setOnClickListener(onAuthorClickListener);
@@ -347,6 +454,8 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     protected void onDestroy() {
         super.onDestroy();
         postManager.closeListeners(this);
+        vrPanoramaView.shutdown();
+        vrVideoView.shutdown();
     }
 
     @Override
@@ -415,6 +524,27 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         if (hasAccessToEditComment(selectedComment.getAuthorId()) || hasAccessToModifyPost()) {
             mActionMode = startSupportActionMode(new ActionModeCallback(selectedComment));
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        vrPanoramaView.resumeRendering();
+        vrVideoView.resumeRendering();
+        // Update the text to account for the paused video in onPause().
+        updateStatusText();
+    }
+
+    @Override
+    protected void onPause() {
+        vrPanoramaView.pauseRendering();
+        super.onPause();
+        // Prevent the view from rendering continuously when in the background.
+        vrVideoView.pauseRendering();
+        // If the video is playing when onPause() is called, the default behavior will be to pause
+        // the video and keep it paused when onResume() is called.
+        isPaused = true;
+        playToggle.setImageResource(isPaused ? R.drawable.ic_play_arrow_white_24px : R.drawable.ic_pause_white_24px);
     }
 
     private OnPostChangedListener createOnPostChangeListener() {
@@ -499,7 +629,35 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         }
 
         if(post.isStateVideo360()){
+            postImageView.setVisibility(View.GONE);
+            vrVideoView.setVisibility(View.VISIBLE);
+            labelVideo.setVisibility(View.VISIBLE);
+            label360.setVisibility(View.VISIBLE);
+            statusText.setVisibility(View.VISIBLE);
+            linearSeekbar.setVisibility(View.VISIBLE);
+            final VrVideoView.Options opt = new VrVideoView.Options();
+            vrVideoView.setInfoButtonEnabled(false);
+            vrVideoView.setStereoModeButtonEnabled(false);
+            vrVideoView.setFullscreenButtonEnabled(false);
+            vrVideoView.setPureTouchTracking(true);
 
+            scheduleStartPostponedTransitionVrPanoramaVideo(vrVideoView);
+
+
+
+            if (backgroundVideoLoaderTask != null) {
+                // Cancel any task from a previous intent sent to this activity.
+                backgroundVideoLoaderTask.cancel(true);
+            }
+
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    backgroundVideoLoaderTask = new VideoLoaderTask();
+                    backgroundVideoLoaderTask.execute(Pair.create(Uri.parse(post.getImagePath()),opt));
+                }
+            }, 500);
         }
 
         if(post.isState360()){
@@ -590,6 +748,17 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     }
 
     private void scheduleStartPostponedTransitionVrPanorama(final VrPanoramaView imageView) {
+        imageView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                imageView.getViewTreeObserver().removeOnPreDrawListener(this);
+                supportStartPostponedEnterTransition();
+                return true;
+            }
+        });
+    }
+
+    private void scheduleStartPostponedTransitionVrPanoramaVideo(final VrVideoView imageView) {
         imageView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -1021,4 +1190,77 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         }
     };
 
+    private void setIsMuted(boolean isMuted) {
+        this.isMuted = isMuted;
+        volumeToggle.setImageResource(isMuted ? R.drawable.volume_off : R.drawable.volume_on);
+        vrVideoView.setVolume(isMuted ? 0.0f : 1.0f);
+    }
+
+    private void togglePause() {
+        if (isPaused) {
+            vrVideoView.playVideo();
+        } else {
+            vrVideoView.pauseVideo();
+        }
+        isPaused = !isPaused;
+        playToggle.setImageResource(isPaused ? R.drawable.ic_play_arrow_white_24px : R.drawable.ic_pause_white_24px);
+        updateStatusText();
+    }
+
+    private void updateStatusText() {
+        StringBuilder status = new StringBuilder();
+        status.append(isPaused ? "Paused: " : "Playing: ");
+        status.append(String.format("%.2f", vrVideoView.getCurrentPosition() / 1000f));
+        status.append(" / ");
+        status.append(vrVideoView.getDuration() / 1000f);
+        status.append(" seconds.");
+        statusText.setText(status.toString());
+    }
+
+    class VideoLoaderTask extends AsyncTask<Pair<Uri, VrVideoView.Options>, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Pair<Uri, VrVideoView.Options>... fileInformation) {
+            try {
+                if (fileInformation == null || fileInformation.length < 1
+                        || fileInformation[0] == null || fileInformation[0].first == null) {
+                    // No intent was specified, so we default to playing the local stereo-over-under video.
+
+                } else {
+
+                    vrVideoView.loadVideo(fileInformation[0].first, fileInformation[0].second);
+                }
+            } catch (IOException e) {
+                // An error here is normally due to being unable to locate the file.
+                //loadVideoStatus = LOAD_VIDEO_STATUS_ERROR;
+                // Since this is a background thread, we need to switch to the main thread to show a toast.
+                vrVideoView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast
+                                .makeText(PostDetailsActivity.this, "Error opening file. ", Toast.LENGTH_LONG)
+                                .show();
+                    }
+                });
+                Log.e(TAG, "Could not open video: " + e);
+            }
+
+            return true;
+        }
+    }
+
+    private class SeekBarListener implements SeekBar.OnSeekBarChangeListener {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (fromUser) {
+                vrVideoView.seekTo(progress);
+                updateStatusText();
+            } // else this was from the ActivityEventHandler.onNewFrame()'s seekBar.setProgress update.
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) { }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) { }
+    }
 }

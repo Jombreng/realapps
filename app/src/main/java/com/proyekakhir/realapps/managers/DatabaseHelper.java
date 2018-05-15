@@ -832,6 +832,9 @@ public class DatabaseHelper {
                         Post post = new Post();
                         post.setStatePrivate((boolean) mapObj.get("statePrivate"));
                         post.setState360((boolean) mapObj.get("state360"));
+                        if(mapObj.containsKey("stateVideo360")){
+                            post.setStateVideo360((boolean) mapObj.get("stateVideo360"));
+                        }
                         post.setId(key);
                         post.setTitle((String) mapObj.get("title"));
                         post.setDescription((String) mapObj.get("description"));
@@ -902,6 +905,9 @@ public class DatabaseHelper {
                             Post post = new Post();
                             post.setStatePrivate((boolean) mapObj.get("statePrivate"));
                             post.setState360((boolean) mapObj.get("state360"));
+                            if(mapObj.containsKey("stateVideo360")){
+                                post.setStateVideo360((boolean) mapObj.get("stateVideo360"));
+                            }
                             post.setId(key);
                             post.setTitle((String) mapObj.get("title"));
                             post.setDescription((String) mapObj.get("description"));

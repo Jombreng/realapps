@@ -86,8 +86,11 @@ public class MainActivity extends BaseActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
         profileManager = ProfileManager.getInstance(this);
+        ProfileStatus profileStatus = profileManager.checkProfile();
+        if (!profileStatus.equals(ProfileStatus.PROFILE_CREATED)) {
+            doAuthorization(profileStatus);
+        }
         postManager = PostManager.getInstance(this);
         initContentView();
 
