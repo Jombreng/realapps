@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "220163492703",
+    "firebase_url": "https://proyekakhirrealapps.firebaseio.com",
+    "project_id": "proyekakhirrealapps",
+    "storage_bucket": "proyekakhirrealapps.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:220163492703:android:35ca0866f8ca991d",
+        "android_client_info": {
+          "package_name": "com.proyekakhir.realapps"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "220163492703-kglels2qvv7ris9s2fcd2603r0b881rc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.proyekakhir.realapps",
+            "certificate_hash": "92af604bb10d3f34e0e385bafb0c381d3db608f8"
+          }
+        },
+        {
+          "client_id": "220163492703-tdj3sdui07uiug27gndpm3njtkknlrn3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYfhKbHs3XlyPXm2Tw64FFHjkNPSB2BeU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "220163492703-tdj3sdui07uiug27gndpm3njtkknlrn3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

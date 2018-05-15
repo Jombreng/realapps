@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/intrinsic_padding"
+    tools:context=".activities.CreatePostActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusableInTouchMode="true"
+        android:focusable="true">
+
+        <RelativeLayout
+            android:id="@+id/imageContainer"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="@dimen/intrinsic_padding"
+            android:layout_alignParentTop="true">
+
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_stub"
+                android:focusableInTouchMode="true"
+                android:focusable="true" />
+
+            <com.google.vr.sdk.widgets.pano.VrPanoramaView
+                android:visibility="gone"
+                android:id="@+id/panoImageView"
+                android:layout_width="match_parent"
+                android:scrollbars="@null"
+                android:layout_height="match_parent"/>
+
+            <com.google.vr.sdk.widgets.video.VrVideoView
+                android:visibility="gone"
+                android:id="@+id/panoVideoView"
+                android:layout_width="match_parent"
+                android:scrollbars="@null"
+                android:layout_height="match_parent"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_centerInParent="true"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/linearSeekbar"
+            android:layout_below="@id/imageContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+            <!-- Seeking UI & progress indicator.-->
+            <ImageButton
+                android:background="@color/white_transparent"
+                android:id="@+id/play_toggle"
+                android:paddingTop="4dp"
+                android:paddingStart="0dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/ic_pause_white_24px"/>
+            <SeekBar
+                android:id="@+id/seek_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_height="32dp"
+                android:layout_weight="8"
+                android:layout_width="0dp"/>
+            <ImageButton
+                android:background="@color/white_transparent"
+                android:id="@+id/volume_toggle"
+                android:paddingTop="4dp"
+                android:paddingStart="0dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/volume_on"/>
+        </LinearLayout>
+        <TextView
+            android:visibility="gone"
+            android:paddingBottom="8dp"
+            android:layout_below="@id/linearSeekbar"
+            android:id="@+id/status_text"
+            android:text="Loading Video..."
+            android:layout_centerInParent="true"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:textSize="@dimen/caption_time_size"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"/>
+
+        <RadioGroup
+            android:id="@+id/radioButtonGroup"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_below="@+id/status_text">
+            <RadioButton android:id="@+id/radio_public"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/public_post"
+                android:onClick="onRadioButtonClicked"/>
+            <RadioButton android:id="@+id/radio_private"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/private_post"
+                android:onClick="onRadioButtonClicked"/>
+        </RadioGroup>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/input_layout_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/intrinsic_padding"
+            android:layout_below="@+id/radioButtonGroup">
+
+            <EditText
+                android:id="@+id/titleEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_title"
+                android:inputType="textMultiLine" />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/input_layout_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:layout_below="@+id/input_layout_title">
+
+            <EditText
+                android:id="@+id/descriptionEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:hint="@string/hint_description"
+                android:inputType="textMultiLine" />
+
+        </android.support.design.widget.TextInputLayout>
+
+    </RelativeLayout>
+
+</ScrollView>
