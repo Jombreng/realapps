@@ -17,6 +17,7 @@
 
 package com.proyekakhir.realapps.adapters.holders;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
@@ -231,14 +232,29 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     private void loadThumbnailForVideo(Bitmap bm){
         int width = Utils.getDisplayWidth(context);
         int height = (int) context.getResources().getDimension(R.dimen.post_detail_image_height);
-        Glide.with(context)
-                .load(bm)
-                .apply(RequestOptions.centerCropTransform()
-                        .override(width,height)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .error(R.drawable.ic_stub))
-                .transition(withCrossFade())
-                .into(postImageView);
+        if (isValidContextForGlide(context)) {
+            Glide.with(context)
+                    .load(bm)
+                    .apply(RequestOptions.centerCropTransform()
+                            .override(width,height)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .error(R.drawable.ic_stub))
+                    .transition(withCrossFade())
+                    .into(postImageView);
+        }
+    }
+
+    public static boolean isValidContextForGlide(final Context context) {
+        if (context == null) {
+            return false;
+        }
+        if (context instanceof Activity) {
+            final Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String removeNewLinesDividers(String text) {

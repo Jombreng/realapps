@@ -20,7 +20,13 @@
         android:id="@+id/delete_post_action"
         android:title="@string/delete_post_menu"
         app:showAsAction="never"
-        android:orderInCategory="2"
+        android:orderInCategory="3"
         android:visible="false" />
+
+    <item
+        android:id="@+id/download_post_action"
+        android:title="@string/download_post_menu"
+        app:showAsAction="never"
+        android:orderInCategory="4" />
 
 </menu>

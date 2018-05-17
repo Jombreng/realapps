@@ -25,12 +25,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -75,8 +77,17 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+
+import com.google.android.gms.tasks.OnCanceledListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnPausedListener;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
 import com.google.vr.sdk.widgets.pano.VrPanoramaEventListener;
 import com.google.vr.sdk.widgets.pano.VrPanoramaView;
 import com.google.vr.sdk.widgets.video.VrVideoEventListener;
@@ -103,6 +114,7 @@ import com.proyekakhir.realapps.model.Profile;
 import com.proyekakhir.realapps.utils.FormatterUtil;
 import com.proyekakhir.realapps.utils.Utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -152,6 +164,7 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     private MenuItem complainActionMenuItem;
     private MenuItem editActionMenuItem;
     private MenuItem deleteActionMenuItem;
+    private MenuItem downloadActionMenuItem;
 
     private String postId;
 
@@ -174,6 +187,8 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     private ImageLoaderTask imageLoaderTask;
     private VideoLoaderTask backgroundVideoLoaderTask;
 
+    private StorageReference imageRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -186,6 +201,7 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         profileManager = ProfileManager.getInstance(this);
         postManager = PostManager.getInstance(this);
         commentManager = CommentManager.getInstance(this);
+        imageRef = FirebaseStorage.getInstance().getReference().child("images");
 
         isAuthorAnimationRequired = getIntent().getBooleanExtra(AUTHOR_ANIMATION_NEEDED_EXTRA_KEY, false);
         postId = getIntent().getStringExtra(POST_ID_EXTRA_KEY);
@@ -961,6 +977,7 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         complainActionMenuItem = menu.findItem(R.id.complain_action);
         editActionMenuItem = menu.findItem(R.id.edit_post_action);
         deleteActionMenuItem = menu.findItem(R.id.delete_post_action);
+        downloadActionMenuItem = menu.findItem(R.id.download_post_action);
 
         if (post != null) {
             updateOptionMenuVisibility();
@@ -991,6 +1008,45 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
                     attemptToRemovePost();
                 }
                 return true;
+            case R.id.download_post_action:
+                AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+                if(post!=null){
+                    if(post.isStateVideo360()){
+                        alert.setTitle("File will be save in ../Videos");
+                        alert.setMessage("Enter file name");
+                    }else {
+                        alert.setTitle("File will be save in ../Pictures");
+                        alert.setMessage("Enter file name");
+                    }
+
+                    final EditText input = new EditText(PostDetailsActivity.this);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.MATCH_PARENT);
+                    input.setLayoutParams(lp);
+
+                    input.setHint("File name");
+
+                    alert.setView(input);
+
+                    alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            //Your action here
+                            String name = input.getText().toString();
+                            downloadToLocalFile(imageRef.child(post.getImageTitle()),name);
+                        }
+                    });
+
+                    alert.setNegativeButton("Cancel",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    dialog.cancel();
+                                }
+                            });
+
+                    alert.show();
+                }
         }
 
         return super.onOptionsItemSelected(item);
@@ -1262,5 +1318,52 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) { }
+    }
+
+    private void downloadToLocalFile(StorageReference fileRef,String name) {
+        if (fileRef != null) {
+            showProgress(R.string.message_downloading_post);
+            File rootPath;
+            if(post.isStateVideo360()){
+                rootPath = new File(Environment.getExternalStorageDirectory(), "Videos");
+            }else {
+                rootPath = new File(Environment.getExternalStorageDirectory(), "Pictures");
+            }
+
+            if(!rootPath.exists()) {
+                rootPath.mkdirs();
+            }
+            final File localFile;
+            if(!post.isStateVideo360())
+                localFile = new File(rootPath, name+".jpg");
+            else
+                localFile = new File(rootPath,name+".mp4");
+
+            fileRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                    Log.d(TAG, "onSuccess: "+localFile.toString());
+                    progressDialog.dismiss();
+                    showSnackBar(R.string.download_successful);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    progressDialog.dismiss();
+                    Toast.makeText(PostDetailsActivity.this, exception.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }).addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+                @Override
+                public void onProgress(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                    // progress percentage
+                    double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+
+                    // percentage in progress dialog
+                    progressDialog.setMessage("Downloaded " + ((int) progress) + "%...");
+                }
+            });
+        } else {
+            Toast.makeText(PostDetailsActivity.this, "Upload file before downloading", Toast.LENGTH_LONG).show();
+        }
     }
 }
