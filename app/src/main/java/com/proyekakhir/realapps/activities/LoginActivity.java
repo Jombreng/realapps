@@ -83,18 +83,15 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
             LogoutHelper.signOut(mGoogleApiClient, this);
         }
 
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                final FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // Profile is signed in
-                    LogUtil.logDebug(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    checkIsProfileExist(user.getUid());
-                } else {
-                    // Profile is signed out
-                    LogUtil.logDebug(TAG, "onAuthStateChanged:signed_out");
-                }
+        mAuthListener = firebaseAuth -> {
+            final FirebaseUser user = firebaseAuth.getCurrentUser();
+            if (user != null) {
+                // Profile is signed in
+                LogUtil.logDebug(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                checkIsProfileExist(user.getUid());
+            } else {
+                // Profile is signed out
+                LogUtil.logDebug(TAG, "onAuthStateChanged:signed_out");
             }
         };
 
@@ -148,19 +145,16 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
     }
 
     private void checkIsProfileExist(final String userId) {
-        ProfileManager.getInstance(this).isProfileExist(userId, new OnObjectExistListener<Profile>() {
-            @Override
-            public void onDataChanged(boolean exist) {
-                if (!exist) {
-                    startCreateProfileActivity();
-                } else {
-                    PreferencesUtil.setProfileCreated(LoginActivity.this, true);
-                    DatabaseHelper.getInstance(LoginActivity.this.getApplicationContext())
-                            .addRegistrationToken(FirebaseInstanceId.getInstance().getToken(), userId);
-                }
-                hideProgress();
-                finish();
+        ProfileManager.getInstance(this).isProfileExist(userId, exist -> {
+            if (!exist) {
+                startCreateProfileActivity();
+            } else {
+                PreferencesUtil.setProfileCreated(LoginActivity.this, true);
+                DatabaseHelper.getInstance(LoginActivity.this.getApplicationContext())
+                        .addRegistrationToken(FirebaseInstanceId.getInstance().getToken(), userId);
             }
+            hideProgress();
+            finish();
         });
     }
 
@@ -190,17 +184,14 @@ public class LoginActivity extends BaseActivity implements GoogleApiClient.OnCon
 
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        LogUtil.logDebug(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
+                .addOnCompleteListener(this, task -> {
+                    LogUtil.logDebug(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
 
-                        // If sign in fails, display a message to the user. If sign in succeeds
-                        // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
-                        if (!task.isSuccessful()) {
-                            handleAuthError(task);
-                        }
+                    // If sign in fails, display a message to the user. If sign in succeeds
+                    // the auth state listener will be notified and logic to handle the
+                    // signed in user can be handled in the listener.
+                    if (!task.isSuccessful()) {
+                        handleAuthError(task);
                     }
                 });
     }

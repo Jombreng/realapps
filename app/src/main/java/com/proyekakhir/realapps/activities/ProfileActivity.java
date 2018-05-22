@@ -452,6 +452,7 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
                 } else {
                     showSnackBar(R.string.internet_connection_failed);
                 }
+                return true;
             case R.id.privatePost:
                 startPrivatePostActivity();
                 return true;

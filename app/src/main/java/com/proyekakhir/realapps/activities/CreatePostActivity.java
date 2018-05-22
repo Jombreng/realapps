@@ -99,15 +99,10 @@ public class CreatePostActivity extends PickImageActivity implements OnPostCreat
         descriptionEditText = (EditText) findViewById(R.id.descriptionEditText);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        imageView = (ImageView) findViewById(R.id.imageView);
-        imagePanoView = (VrPanoramaView) findViewById(R.id.panoImageView) ;
+        imageView = findViewById(R.id.imageView);
+        imagePanoView = findViewById(R.id.panoImageView);
 
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onSelectImageClick(v,"post");
-            }
-        });
+        imageView.setOnClickListener(v -> onSelectImageClick(v,"post"));
 
         videoPanoView.setEventListener(new VrVideoEventListener(){
             @Override
@@ -171,29 +166,16 @@ public class CreatePostActivity extends PickImageActivity implements OnPostCreat
             }
         });
 
-        playToggle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                togglePause();
-            }
-        });
+        playToggle.setOnClickListener(v -> togglePause());
 
-        volumeToggle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setIsMuted(!isMuted);
-            }
-        });
+        volumeToggle.setOnClickListener(v -> setIsMuted(!isMuted));
 
-        titleEditText.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (titleEditText.hasFocus() && titleEditText.getError() != null) {
-                    titleEditText.setError(null);
-                    return true;
-                }
-                return false;
+        titleEditText.setOnTouchListener((v, event) -> {
+            if (titleEditText.hasFocus() && titleEditText.getError() != null) {
+                titleEditText.setError(null);
+                return true;
             }
+            return false;
         });
         imagePanoView.setEventListener(new VrPanoramaEventListener() {
             @Override

@@ -62,7 +62,7 @@
             android:name=".activities.ChatHistoryActivity"
             android:configChanges="orientation|screenSize"
             android:theme="@style/AppCompat.NoActionBar"
-            android:label="@string/label_search_activity" />
+            android:label="@string/label_chat_activity" />
         <activity
             android:name=".activities.ChatActivity"
             android:configChanges="orientation|screenSize"

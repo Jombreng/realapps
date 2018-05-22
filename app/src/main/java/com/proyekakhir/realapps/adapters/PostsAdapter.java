@@ -23,7 +23,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.proyekakhir.realapps.R;
 import com.proyekakhir.realapps.activities.MainActivity;
 import com.proyekakhir.realapps.adapters.holders.LoadViewHolder;
@@ -38,6 +45,7 @@ import com.proyekakhir.realapps.utils.PreferencesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Kristina on 10/31/16.
@@ -46,7 +54,7 @@ import java.util.List;
 public class PostsAdapter extends BasePostsAdapter {
     public static final String TAG = PostsAdapter.class.getSimpleName();
 
-
+    private RelativeLayout relativeLayoutEmpty;
     private Callback callback;
     private boolean isLoading = false;
     private boolean isMoreDataAvailable = true;
@@ -63,9 +71,10 @@ public class PostsAdapter extends BasePostsAdapter {
         setHasStableIds(true);
     }
 
-    public PostsAdapter(final MainActivity activity, SwipeRefreshLayout swipeContainer, boolean isFollowingFeed, ArrayList<String> followingIds) {
+    public PostsAdapter(final MainActivity activity, SwipeRefreshLayout swipeContainer, boolean isFollowingFeed, RelativeLayout relativeLayoutEmpty) {
         super(activity);
-        this.followingIds = followingIds;
+        this.relativeLayoutEmpty = relativeLayoutEmpty;
+        this.followingIds = new ArrayList<>();
         this.mainActivity = activity;
         this.swipeContainer = swipeContainer;
         initRefreshLayout(isFollowingFeed);
@@ -86,7 +95,6 @@ public class PostsAdapter extends BasePostsAdapter {
     private void onRefreshAction(boolean isFollowingFeed) {
         Log.e(TAG, "onRefreshAction: called" );
         if (activity.hasInternetConnection()) {
-
             loadFirstPage(true);
             cleanSelectedPostInformation();
         } else {
@@ -160,6 +168,7 @@ public class PostsAdapter extends BasePostsAdapter {
 
     private void addList(List<Post> list) {
         this.postList.addAll(list);
+        relativeLayoutEmpty.setVisibility(View.GONE);
         notifyDataSetChanged();
         isLoading = false;
     }
@@ -179,7 +188,8 @@ public class PostsAdapter extends BasePostsAdapter {
             return;
         }
 
-
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null)
+            getFollowedIds();
 
         OnPostListChangedListener<Post> onPostsDataChangedListener = new OnPostListChangedListener<Post>() {
             @Override
@@ -203,6 +213,7 @@ public class PostsAdapter extends BasePostsAdapter {
                         PreferencesUtil.setPostWasLoadedAtLeastOnce(mainActivity, true);
                     }
                 } else {
+                    relativeLayoutEmpty.setVisibility(View.VISIBLE);
                     isLoading = false;
                 }
 
@@ -228,6 +239,36 @@ public class PostsAdapter extends BasePostsAdapter {
     public void removeSelectedPost() {
         postList.remove(selectedPostPosition);
         notifyItemRemoved(selectedPostPosition);
+    }
+
+    private void getFollowedIds() {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("following").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists())
+                    collectFollowingIds((Map<String,Object>) dataSnapshot.getValue());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void collectFollowingIds(Map<String,Object> users) {
+        //iterate through each user, ignoring their UID
+        followingIds.clear();
+        for (Map.Entry<String, Object> entry : users.entrySet()){
+
+            //Get user map
+            Map singleUser = (Map) entry.getValue();
+            //Get phone field and append to list
+            followingIds.add((String) singleUser.get("id"));
+        }
+
+        Log.e(TAG, "collectFollowingIds: "+followingIds.toString() );
     }
 
     @Override

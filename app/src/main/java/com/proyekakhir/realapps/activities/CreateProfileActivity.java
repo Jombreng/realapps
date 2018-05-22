@@ -114,12 +114,7 @@ public class CreateProfileActivity extends PickImageActivity implements OnProfil
             imageView.setImageResource(R.drawable.ic_stub);
         }
 
-        imageView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onSelectImageClick(v,"profile");
-            }
-        });
+        imageView.setOnClickListener(v -> onSelectImageClick(v,"profile"));
     }
 
 

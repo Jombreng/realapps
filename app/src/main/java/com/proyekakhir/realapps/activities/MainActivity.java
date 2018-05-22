@@ -38,6 +38,7 @@ import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -92,6 +93,7 @@ public class MainActivity extends BaseActivity {
             doAuthorization(profileStatus);
         }
         postManager = PostManager.getInstance(this);
+
         initContentView();
 
         postCounterWatcher = new PostManager.PostCounterWatcher() {
@@ -173,7 +175,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void refreshPostList(boolean isFollowingFeed) {
-        getFollowedIds();
+        //getFollowedIds();
         postsAdapter.loadFirstPage(isFollowingFeed);
         if (postsAdapter.getItemCount() > 0) {
             recyclerView.scrollToPosition(0);
@@ -205,6 +207,7 @@ public class MainActivity extends BaseActivity {
                 }
             });
 
+            RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.relLayoutEmpty);
             final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
             SwipeRefreshLayout swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
             recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -213,7 +216,7 @@ public class MainActivity extends BaseActivity {
                 getFollowedIds();
             }
 
-            postsAdapter = new PostsAdapter(this, swipeContainer,true,ids);
+            postsAdapter = new PostsAdapter(this, swipeContainer,true,relativeLayout);
             postsAdapter.setCallback(new PostsAdapter.Callback() {
                 @Override
                 public void onItemClick(final Post post, final View view) {
