@@ -54,6 +54,10 @@
             android:theme="@style/AppCompat.NoActionBar"
             android:label="@string/label_search_activity" />
         <activity
+            android:name=".activities.ViewFollowersActivity"
+            android:label="@string/title_activity_view_followers"
+            android:theme="@style/AppCompat.NoActionBar" />
+        <activity
             android:name=".activities.PrivatePostActivity"
             android:configChanges="orientation|screenSize"
             android:theme="@style/AppCompat.NoActionBar"

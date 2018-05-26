@@ -147,7 +147,7 @@
                                 android:layout_marginRight="@dimen/profile_screen_margin_between_counters"
                                 android:gravity="center"
                                 android:textAppearance="@style/TextAppearance.Title"
-                                android:visibility="visible" />
+                                android:visibility="gone" />
 
                             <TextView
                                 android:id="@+id/followingCountersTextView"

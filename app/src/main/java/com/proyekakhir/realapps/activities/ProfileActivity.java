@@ -80,6 +80,7 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
     private static final String TAG = ProfileActivity.class.getSimpleName();
     public static final int CREATE_POST_FROM_PROFILE_REQUEST = 22;
     public static final String USER_ID_EXTRA_KEY = "ProfileActivity.USER_ID_EXTRA_KEY";
+    public static final String FOLLOW_EXTRA_KEY = "ProfileActivity.FOLLOW_EXTRA_KEY";
 
     // UI references.
     private TextView nameEditText;
@@ -94,6 +95,7 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
     private GoogleApiClient mGoogleApiClient;
     private String currentUserId;
     private String userID;
+    private String avatarUrl = "";
 
     private PostsByUserAdapter postsAdapter;
     private SwipeRefreshLayout swipeContainer;
@@ -140,15 +142,14 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
         btnFollow = (Button) findViewById(R.id.btnFollow);
 
         swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                onRefreshAction();
-            }
-        });
+        swipeContainer.setOnRefreshListener(() -> onRefreshAction());
 
         loadPostsList();
         supportPostponeEnterTransition();
+
+        followersCountersTextView.setOnClickListener(v -> openFollowersActivity(userID));
+        followingCountersTextView.setOnClickListener(v -> openFollowingActivity(userID));
+        imageView.setOnClickListener(v -> openImageDetailScreen());
     }
 
     @Override
@@ -199,6 +200,28 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
         }
     }
 
+    private void openImageDetailScreen() {
+        if(!avatarUrl.equals("")){
+            Intent intent = new Intent(this, ImageDetailActivity.class);
+            intent.putExtra(ImageDetailActivity.IMAGE_URL_EXTRA_KEY, avatarUrl);
+            startActivity(intent);
+        }
+    }
+
+    private void openFollowersActivity(String userId) {
+        Intent intent = new Intent(ProfileActivity.this, ViewFollowersActivity.class);
+        intent.putExtra(ProfileActivity.USER_ID_EXTRA_KEY, userId);
+        intent.putExtra(ProfileActivity.FOLLOW_EXTRA_KEY,"followers");
+        startActivityForResult(intent, ProfileActivity.CREATE_POST_FROM_PROFILE_REQUEST);
+    }
+
+    private void openFollowingActivity(String userId) {
+        Intent intent = new Intent(ProfileActivity.this, ViewFollowersActivity.class);
+        intent.putExtra(ProfileActivity.USER_ID_EXTRA_KEY, userId);
+        intent.putExtra(ProfileActivity.FOLLOW_EXTRA_KEY,"following");
+        startActivityForResult(intent, ProfileActivity.CREATE_POST_FROM_PROFILE_REQUEST);
+    }
+
     private void onRefreshAction() {
         postsAdapter.loadPosts();
     }
@@ -228,7 +251,7 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
                     String postsLabel = getResources().getQuantityString(R.plurals.posts_counter_format, postsCount, postsCount);
                     postsCounterTextView.setText(buildCounterSpannable(postsLabel, postsCount));
 
-                    likesCountersTextView.setVisibility(View.VISIBLE);
+                    //likesCountersTextView.setVisibility(View.VISIBLE);
                     postsCounterTextView.setVisibility(View.VISIBLE);
                     followingCountersTextView.setVisibility(View.VISIBLE);
                     followersCountersTextView.setVisibility(View.VISIBLE);
@@ -296,14 +319,7 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
         if(!userID.equals(currentUserId)){
             btnFollow.setVisibility(View.VISIBLE);
         }
-        btnFollow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                    followController.handleFollowClickAction(ProfileActivity.this, profile);
-
-            }
-        });
+        btnFollow.setOnClickListener(v -> followController.handleFollowClickAction(ProfileActivity.this, profile));
     }
 
     private void initFollowButtonState() {
@@ -325,13 +341,10 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
     }
 
     private OnObjectChangedListener<Profile> createOnProfileChangedListener() {
-        return new OnObjectChangedListener<Profile>() {
-            @Override
-            public void onObjectChanged(Profile obj) {
-                fillUIFields(obj);
-                initFollow(obj);
-                initFollowButtonState();
-            }
+        return obj -> {
+            fillUIFields(obj);
+            initFollow(obj);
+            initFollowButtonState();
         };
     }
 
@@ -340,6 +353,8 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
             nameEditText.setText(profile.getUsername());
 
             if (profile.getPhotoUrl() != null) {
+
+                avatarUrl = profile.getPhotoUrl();
 
                 Glide.with(this)
                         .asBitmap()
@@ -360,9 +375,9 @@ public class ProfileActivity extends BaseActivity implements GoogleApiClient.OnC
                 imageView.setImageResource(R.drawable.ic_stub);
             }
 
-            int likesCount = (int) profile.getLikesCount();
-            String likesLabel = getResources().getQuantityString(R.plurals.likes_counter_format, likesCount, likesCount);
-            likesCountersTextView.setText(buildCounterSpannable(likesLabel, likesCount));
+//            int likesCount = (int) profile.getLikesCount();
+//            String likesLabel = getResources().getQuantityString(R.plurals.likes_counter_format, likesCount, likesCount);
+//            likesCountersTextView.setText(buildCounterSpannable(likesLabel, likesCount));
             int followersCount = (int) profile.getFollowersCount();
             String followersLabel = getResources().getQuantityString(R.plurals.followers_counter_format, followersCount, followersCount);
             followersCountersTextView.setText(buildCounterSpannable(followersLabel, followersCount));

@@ -25,6 +25,8 @@
     <string name="label_chat_activity">Chat</string>
     <string name="label_notifications_activity">Notifications</string>
     <string name="title_activity_login">Sign in</string>
+    <string name="title_activity_view_followers">Followers</string>
+    <string name="title_activity_view_following">Following</string>
     <string name="title_activity_create_profile">Create profile</string>
     <string name="title_activity_profile">Profile</string>
     <string name="title_activity_edit_profile">Edit profile</string>

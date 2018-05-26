@@ -37,7 +37,7 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <android.support.v4.widget.SwipeRefreshLayout
+        <RelativeLayout
             android:id="@+id/swipeContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -58,7 +58,7 @@
                 android:text="@string/internet_connection_failed"
                 android:visibility="gone" />
 
-        </android.support.v4.widget.SwipeRefreshLayout>
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/newPostsCounterTextView"

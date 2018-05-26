@@ -2,6 +2,7 @@ package com.proyekakhir.realapps.adapters.holders;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -15,9 +16,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.proyekakhir.realapps.R;
 import com.proyekakhir.realapps.views.CircularImageView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UsersViewHolder extends RecyclerView.ViewHolder {
+    private static final String TAG = "UsersViewHolder";
 
     public ClickListener getmClickListener() {
         return mClickListener;
@@ -108,4 +111,28 @@ public class UsersViewHolder extends RecyclerView.ViewHolder {
                 rel.setLayoutParams(params);
             }
         }
+
+    public void setDetailsFollowers(Context ctx, String userName, String email, String id, String userImage, ArrayList<String> ids){
+
+        TextView tvUsername = (TextView) mView.findViewById(R.id.username_text);
+        TextView tvName = (TextView) mView.findViewById(R.id.name_text);
+        TextView tvId = (TextView) mView.findViewById(R.id.userId);
+        CircularImageView ivUserimage = (CircularImageView) mView.findViewById(R.id.profile_image);
+        RelativeLayout rel = (RelativeLayout) mView.findViewById(R.id.relLayoutUser);
+
+        ViewGroup.LayoutParams params = rel.getLayoutParams();
+
+        if(ids.contains(id) && !FirebaseAuth.getInstance().getCurrentUser().getUid().equals(id)){
+
+            rel.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT));
+            tvUsername.setText(userName);
+            tvName.setText(email);
+            tvId.setText(id);
+
+            Glide.with(ctx).load(userImage).into(ivUserimage);
+        }else {
+            params.height = 0;
+            rel.setLayoutParams(params);
+        }
+    }
     }

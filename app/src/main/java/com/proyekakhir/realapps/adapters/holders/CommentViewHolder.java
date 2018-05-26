@@ -106,26 +106,23 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
 
     private OnObjectChangedListener<Profile> createOnProfileChangeListener(final ExpandableTextView expandableTextView, final ImageView avatarImageView, final String comment) {
-        return new OnObjectChangedListener<Profile>() {
-            @Override
-            public void onObjectChanged(Profile obj) {
-                String userName = obj.getUsername();
-                fillComment(userName, comment, expandableTextView);
+        return obj -> {
+            String userName = obj.getUsername();
+            fillComment(userName, comment, expandableTextView);
 
-                if (obj.getPhotoUrl() != null) {
-                    Glide.with(context)
-                            .asBitmap()
-                            .load(obj.getPhotoUrl())
-                            .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.ALL)
-                                    .override(100, 100)
-                                    .error(R.drawable.ic_stub))
-                            .into(new SimpleTarget<Bitmap>() {
-                                @Override
-                                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                    avatarImageView.setImageBitmap(resource);
-                                }
-                            });
-                }
+            if (obj.getPhotoUrl() != null) {
+                Glide.with(context)
+                        .asBitmap()
+                        .load(obj.getPhotoUrl())
+                        .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.ALL)
+                                .override(100, 100)
+                                .error(R.drawable.ic_stub))
+                        .into(new SimpleTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                avatarImageView.setImageBitmap(resource);
+                            }
+                        });
             }
         };
     }
