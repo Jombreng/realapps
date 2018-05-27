@@ -195,6 +195,10 @@ public abstract class PickImageActivity extends BaseActivity {
                 getImageView().setVisibility(View.GONE);
 
             }else {
+                getVideoView().setVisibility(View.GONE);
+                getPanoImageView().setVisibility(View.GONE);
+                getImageView().setVisibility(View.VISIBLE);
+
                 Glide.with(this)
                         .load(imageUri).apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)

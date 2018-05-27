@@ -17,6 +17,7 @@
 
 package com.proyekakhir.realapps.activities;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -24,6 +25,7 @@ import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -37,6 +39,8 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ActionMode;
 import android.support.v7.widget.DividerItemDecoration;
@@ -816,26 +820,23 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     }
 
     private OnObjectChangedListener<Profile> createProfileChangeListener() {
-        return new OnObjectChangedListener<Profile>() {
-            @Override
-            public void onObjectChanged(Profile obj) {
-                if (obj.getPhotoUrl() != null) {
-                    Glide.with(PostDetailsActivity.this)
-                            .asBitmap()
-                            .load(obj.getPhotoUrl())
-                            .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.RESOURCE)
-                                    .override(80, 80)
-                                    .error(R.drawable.ic_stub))
-                            .into(new SimpleTarget<Bitmap>() {
-                                @Override
-                                public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                                    authorImageView.setImageBitmap(resource);
-                                }
-                            });
-                }
-
-                authorTextView.setText(obj.getUsername());
+        return obj -> {
+            if (obj.getPhotoUrl() != null) {
+                Glide.with(PostDetailsActivity.this)
+                        .asBitmap()
+                        .load(obj.getPhotoUrl())
+                        .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.RESOURCE)
+                                .override(80, 80)
+                                .error(R.drawable.ic_stub))
+                        .into(new SimpleTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                                authorImageView.setImageBitmap(resource);
+                            }
+                        });
             }
+
+            authorTextView.setText(obj.getUsername());
         };
     }
 
@@ -843,13 +844,10 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
         attemptToLoadComments = true;
 
         final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (attemptToLoadComments) {
-                    commentsProgressBar.setVisibility(View.GONE);
-                    warningCommentsTextView.setVisibility(View.VISIBLE);
-                }
+        handler.postDelayed(() -> {
+            if (attemptToLoadComments) {
+                commentsProgressBar.setVisibility(View.GONE);
+                warningCommentsTextView.setVisibility(View.VISIBLE);
             }
         }, TIME_OUT_LOADING_COMMENTS);
 
@@ -890,12 +888,7 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     }
 
     private OnObjectExistListener<Like> createOnLikeObjectExistListener() {
-        return new OnObjectExistListener<Like>() {
-            @Override
-            public void onDataChanged(boolean exist) {
-                likeController.initLike(exist);
-            }
-        };
+        return exist -> likeController.initLike(exist);
     }
 
     private void initLikeButtonState() {
@@ -908,12 +901,9 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
     private void initLikes() {
         likeController = new LikeController(this, post, likeCounterTextView, likesImageView, false);
 
-        likesContainer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (isPostExist) {
-                    likeController.handleLikeClickAction(PostDetailsActivity.this, post);
-                }
+        likesContainer.setOnClickListener(v -> {
+            if (isPostExist) {
+                likeController.handleLikeClickAction(PostDetailsActivity.this, post);
             }
         });
     }
@@ -1009,47 +999,71 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
                 }
                 return true;
             case R.id.download_post_action:
-                AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-                if(post!=null){
-                    if(post.isStateVideo360()){
-                        alert.setTitle("File will be save in ../Videos");
-                        alert.setMessage("Enter file name");
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    if (!checkIfAlreadyhavePermission()) {
+                        requestForSpecificPermission();
                     }else {
-                        alert.setTitle("File will be save in ../Pictures");
-                        alert.setMessage("Enter file name");
+                        downloadAction();
                     }
-
-                    final EditText input = new EditText(PostDetailsActivity.this);
-                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.MATCH_PARENT);
-                    input.setLayoutParams(lp);
-
-                    input.setHint("File name");
-
-                    alert.setView(input);
-
-                    alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            //Your action here
-                            String name = input.getText().toString();
-                            downloadToLocalFile(imageRef.child(post.getImageTitle()),name);
-                        }
-                    });
-
-                    alert.setNegativeButton("Cancel",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    dialog.cancel();
-                                }
-                            });
-
-                    alert.show();
                 }
+
+
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void downloadAction(){
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        if(post!=null){
+            if(post.isStateVideo360()){
+                alert.setTitle("File will be save in ../Videos");
+                alert.setMessage("Enter file name");
+            }else {
+                alert.setTitle("File will be save in ../Pictures");
+                alert.setMessage("Enter file name");
+            }
+
+            final EditText input = new EditText(PostDetailsActivity.this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT);
+            input.setLayoutParams(lp);
+
+            input.setHint("File name");
+
+            alert.setView(input);
+
+            alert.setPositiveButton("Ok", (dialog, whichButton) -> {
+                //Your action here
+                String name = input.getText().toString();
+                downloadToLocalFile(imageRef.child(post.getImageTitle()),name);
+            });
+
+            alert.setNegativeButton("Cancel",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            dialog.cancel();
+                        }
+                    });
+
+            alert.show();
+        }
+    }
+
+    private boolean checkIfAlreadyhavePermission() {
+        int result = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void requestForSpecificPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 101);
     }
 
     private void doComplainAction() {
@@ -1364,6 +1378,31 @@ public class PostDetailsActivity extends BaseActivity implements EditCommentDial
             });
         } else {
             Toast.makeText(PostDetailsActivity.this, "Upload file before downloading", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 101: {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    downloadAction();
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(PostDetailsActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
         }
     }
 }
