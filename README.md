@@ -33,7 +33,10 @@ Implemented elements and features:
    - edit profile
    - create a post
    - private post
-   
+
+Demo video for the apps
+https://www.youtube.com/watch?v=jJku3XXlQE8&feature=youtu.be
+
 Login Layout
 
 ![alt text](https://cdn.crevado.com/artists/683434/artwork/6415970_enlarged-1.png)
